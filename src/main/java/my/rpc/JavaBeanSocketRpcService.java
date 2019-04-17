@@ -1,40 +1,33 @@
 package my.rpc;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class JavaBeanSocketRpcService implements RpcService {
     String name;
     SocketRpcServiceConfig config;
     ServerSocket serverSocket;
-    Map<String, Object> registerMap = new HashMap<>();
+    ServiceRegister register;
     volatile Thread socketMonitor = null;
     volatile Status status = Status.READY;
+    SocketConnectionPool pool;
 
     enum Status{
-        READY, CONNECTING, RUNNING
+        READY, CONNECTING, RUNNING, STOP
     }
 
     public JavaBeanSocketRpcService(SocketRpcServiceConfig config) {
         this.config = config;
         this.name = config.getName();
+        register = new SocketServiceRegister();
+        ServiceRegisterHolder.getInstance().hold(register);
+        pool = new SocketConnectionPool();
     }
 
     public <T> void register(Class<? super T> serviceInterface, Class<T> impl) {
-        try {
-            T implInstance = JavaBeanInterfaceManager.getInstance().addSingle(serviceInterface, impl);
-            registerMap.putIfAbsent(serviceInterface.getName(), implInstance);
-        } catch (Exception e) {
-            throw new RuntimeException("register fail!", e);
-        }
+        register.register(serviceInterface, impl);
     }
 
     public synchronized void start() {
@@ -53,41 +46,17 @@ public class JavaBeanSocketRpcService implements RpcService {
 
         while (true) {
             try {
+                if (status == Status.STOP) {
+                    return;
+                }
                 status = Status.CONNECTING;
                 serverSocket = new ServerSocket(config.getPort());
                 System.out.println("---open port");
                 status = Status.RUNNING;
                 while (true) {
-                    try (Socket socket = serverSocket.accept()) {
-                        System.out.println("---socket connect");
-                        try (ObjectInputStream ois = new ObjectInputStream(socket.getInputStream())) {
-                            String serviceName = ois.readUTF();
-                            System.out.println("---serviceName=" + serviceName);
-                            String methodName = ois.readUTF();
-                            System.out.println("---methodName=" + methodName);
-                            Object[] args = (Object[]) ois.readObject();
-                            System.out.println("---args=" + Arrays.toString(args));
-                            Class<?>[] types = new Class[args.length];
-                            for (int i = 0; i < args.length; i ++) {
-                                types[i] = args[i].getClass();
-                            }
-                            System.out.println("---types=" + Arrays.toString(types));
-
-                            Object service = getService(serviceName);
-                            if (service == null) {
-                                System.out.println("service " + serviceName + " not found!");
-                            }
-                            // invoke
-                            Method m = service.getClass().getMethod(methodName, types);
-                            Object result = m.invoke(service, args);
-                            System.out.println("---result=" + result);
-                            // back result
-                            try (ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream())) {
-                                oos.writeObject(result);
-                                oos.flush();
-                            }
-                            System.out.println("--- back result over");
-                        }
+                    Socket socket = serverSocket.accept();
+                    try {
+                        pool.add(new SocketHandler(socket));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -112,11 +81,17 @@ public class JavaBeanSocketRpcService implements RpcService {
     }
 
     public void shutdown() {
-
+        try {
+            status = Status.STOP;
+            serverSocket.close();
+            pool.shutdown();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public Object getService(String serviceName) {
-        return registerMap.get(serviceName);
+        return register.getService(serviceName);
     }
 
 
@@ -127,4 +102,6 @@ public class JavaBeanSocketRpcService implements RpcService {
     public void setName(String name) {
         this.name = name;
     }
+
+
 }
