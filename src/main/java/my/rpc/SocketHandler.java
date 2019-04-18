@@ -6,9 +6,12 @@ import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class SocketHandler implements Runnable{
     private Socket socket;
+    private ExecutorService executor = Executors.newCachedThreadPool();
 
     public SocketHandler(Socket socket) {
         this.socket = socket;
