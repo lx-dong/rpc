@@ -1,7 +1,8 @@
 package my.rpc;
 
 public interface Response {
-    String getContextId();
+    long getRequestId();
 
-    Object getResponseObject();
+    Object getData();
+
 }

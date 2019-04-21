@@ -1,56 +1,75 @@
 package my.rpc;
 
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class SocketHandler implements Runnable{
     private Socket socket;
-    private ExecutorService executor = Executors.newCachedThreadPool();
+    private ExecutorService pool = Executors.newCachedThreadPool();
+    private JavaBeanInputStreamHandler inputStreamHandler;
+    private JavaBeanOutputStreamHandler outputStreamHandler;
 
-    public SocketHandler(Socket socket) {
+    public SocketHandler(Socket socket) throws IOException {
+        System.out.println("==== SocketHandler init..");
         this.socket = socket;
+        System.out.println("--- inputStreamHandler init..");
+        this.inputStreamHandler = new JavaBeanInputStreamHandler(socket.getInputStream());
+        System.out.println("--- outputStreamHandler init..");
+        this.outputStreamHandler = new JavaBeanOutputStreamHandler(socket.getOutputStream());
+        System.out.println("==== SocketHandler init end.");
     }
 
     @Override
     public void run() {
         try {
-            System.out.println("---socket connect");
-            try (ObjectInputStream ois = new ObjectInputStream(socket.getInputStream())) {
-                String serviceName = ois.readUTF();
-                System.out.println("---serviceName=" + serviceName);
-                String methodName = ois.readUTF();
-                System.out.println("---methodName=" + methodName);
-                Object[] args = (Object[]) ois.readObject();
-                System.out.println("---args=" + Arrays.toString(args));
-                Class<?>[] types = new Class[args.length];
-                for (int i = 0; i < args.length; i ++) {
-                    types[i] = args[i].getClass();
-                }
-                System.out.println("---types=" + Arrays.toString(types));
+            System.out.println("==== SocketHandler run..");
 
-                Object service = ServiceRegisterHolder.getInstance().get(SocketServiceRegister.class).getService(serviceName);
-                if (service == null) {
-                    System.out.println("service " + serviceName + " not found!");
+            while (true) {
+                if (inputStreamHandler.available()) {
+                    System.out.println("--- inputStreamHandler available, try read request..");
+                    Request request = inputStreamHandler.readRequest();
+                    System.out.println("--- read request:" + request);
+                    pool.execute(() -> {
+                        System.out.println("--- invoke request..");
+                        Response response = invoke(request);
+                        System.out.println("--- return response: " + response + ", write output..");
+                        outputStreamHandler.writeResponse(response);
+                        System.out.println("--- write over.");
+                    });
                 }
-                // invoke
-                Method m = service.getClass().getMethod(methodName, types);
-                Object result = m.invoke(service, args);
-                System.out.println("---result=" + result);
-                // back result
-                try (ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream())) {
-                    oos.writeObject(result);
-                    oos.flush();
-                }
-                System.out.println("--- back result over");
+                TimeUnit.SECONDS.sleep(1);
             }
+
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+
         }
     }
+
+    private Response invoke(Request request){
+        DefaultResponse response = new DefaultResponse(request.getRequestId());
+        try {
+            Object service = ServiceRegisterHolder.getInstance().get(SocketServiceRegister.class).getService(request.getClassName());
+            if (service == null) {
+                System.out.println("service " + request.getClassName() + " not found!");
+            }
+            Object[] params = request.getParams();
+            Class<?>[] types = request.getParamTypes();
+            // invoke
+            Method m = service.getClass().getMethod(request.getMethodName(), types);
+            Object result = m.invoke(service, params);
+            response.setData(result);
+            return response;
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.setData(new RpcException("service error: " + e.getMessage()));
+            return response;
+        }
+    }
+
 }

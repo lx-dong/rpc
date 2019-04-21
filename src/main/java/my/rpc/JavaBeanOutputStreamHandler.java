@@ -1,44 +1,53 @@
 package my.rpc;
 
 import my.rpc.constant.CommonConstant;
+import my.rpc.serialization.JavaBeanSerializer;
+import my.rpc.serialization.Serializer;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 
 public class JavaBeanOutputStreamHandler {
-    public ObjectOutputStream objectOutputStream;
+    private DataOutputStream dataOutputStream;
+    private Serializer serializer = new JavaBeanSerializer();
 
-    public synchronized void handle(Response response) {
+    public synchronized void writeResponse(Response response) {
         try {
-            objectOutputStream.writeByte(CommonConstant.RESPONSE_TYPE);
-            objectOutputStream.writeUTF(response.getContextId());
-            objectOutputStream.writeObject(response.getResponseObject());
+            dataOutputStream.writeByte(CommonConstant.RESPONSE_TYPE);
+            dataOutputStream.writeLong(response.getRequestId());
+            byte[] data = serializer.serialize(response);
+            dataOutputStream.write(data);
+            dataOutputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public synchronized void handle(Request request) {
+    public synchronized void writeRequest(Request request) {
         try {
-            objectOutputStream.writeByte(CommonConstant.REQUEST_TYPE);
-            objectOutputStream.writeUTF(request.getContextId());
-            objectOutputStream.writeUTF(request.getClassName());
-            objectOutputStream.writeUTF(request.getMethodName());
-            objectOutputStream.writeObject(request.getParams());
+            dataOutputStream.writeByte(CommonConstant.REQUEST_TYPE);
+            dataOutputStream.writeLong(request.getRequestId());
+            byte[] data = serializer.serialize(request);
+            dataOutputStream.write(data);
+            dataOutputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public JavaBeanOutputStreamHandler(ObjectOutputStream objectOutputStream) {
-        this.objectOutputStream = objectOutputStream;
+    public JavaBeanOutputStreamHandler(OutputStream outputStream) {
+        this.dataOutputStream = new DataOutputStream(outputStream);
     }
 
-    public ObjectOutputStream getObjectOutputStream() {
-        return objectOutputStream;
-    }
-
-    public void setObjectOutputStream(ObjectOutputStream objectOutputStream) {
-        this.objectOutputStream = objectOutputStream;
+    public void shutdown() {
+        if (this.dataOutputStream != null) {
+            try {
+                dataOutputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

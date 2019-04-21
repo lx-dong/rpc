@@ -2,11 +2,13 @@ package my.rpc;
 
 public interface Request {
 
-    String getContextId();
+    long getRequestId();
 
     String getClassName();
 
     String getMethodName();
 
     Object[] getParams();
+
+    Class[] getParamTypes();
 }

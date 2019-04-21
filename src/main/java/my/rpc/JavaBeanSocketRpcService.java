@@ -51,11 +51,12 @@ public class JavaBeanSocketRpcService implements RpcService {
                 }
                 status = Status.CONNECTING;
                 serverSocket = new ServerSocket(config.getPort());
-                System.out.println("---open port");
+                System.out.println("---open port " + config.getPort());
                 status = Status.RUNNING;
                 while (true) {
                     Socket socket = serverSocket.accept();
                     try {
+                        System.out.println("-- new socket come");
                         pool.add(new SocketHandler(socket));
                     } catch (Exception e) {
                         e.printStackTrace();
