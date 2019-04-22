@@ -1,6 +1,6 @@
 package my.rpc;
 
-public interface Request {
+public interface Request{
 
     long getRequestId();
 

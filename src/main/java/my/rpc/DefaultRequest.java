@@ -1,8 +1,11 @@
 package my.rpc;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
-public class DefaultRequest implements Request{
+public class DefaultRequest implements Request, Serializable {
+    private static final long serialVersionUID = -7734890584771973508L;
+
     private long requestId;
     private String className;
     private String methodName;

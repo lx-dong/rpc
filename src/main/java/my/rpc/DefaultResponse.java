@@ -1,6 +1,10 @@
 package my.rpc;
 
-public class DefaultResponse implements Response {
+import java.io.Serializable;
+
+public class DefaultResponse implements Response, Serializable {
+    private static final long serialVersionUID = -1123371282183622021L;
+
     private long requestId;
     private Object data;
 

@@ -22,6 +22,7 @@ public class JavaBeanInputStreamHandler{
 
             if (type == CommonConstant.REQUEST_TYPE) {
                 byte[] data = new byte[dataLength];
+                dataInputStream.read(data);
                 Request request = serializer.deserilize(data, DefaultRequest.class);
                 return request;
             } else {
@@ -35,7 +36,7 @@ public class JavaBeanInputStreamHandler{
 
 
     public Response readResponse() throws IOException {
-
+        System.out.println("readResponse,,");
         try {
             byte type = dataInputStream.readByte();
             long requestId = dataInputStream.readLong();
@@ -57,7 +58,6 @@ public class JavaBeanInputStreamHandler{
 
     public boolean available() throws IOException {
         int available = dataInputStream.available();
-        System.out.println("available: " + available);
         return available > 0;
     }
 
@@ -67,6 +67,7 @@ public class JavaBeanInputStreamHandler{
 
 
     public void shutdown() {
+        System.out.println("dataInputStream shutdown ..");
         if (this.dataInputStream != null) {
             try {
                 dataInputStream.close();

@@ -6,7 +6,6 @@ import my.rpc.serialization.Serializer;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 public class JavaBeanOutputStreamHandler {
@@ -15,9 +14,11 @@ public class JavaBeanOutputStreamHandler {
 
     public synchronized void writeResponse(Response response) {
         try {
+            System.out.println("writeResponse..");
             dataOutputStream.writeByte(CommonConstant.RESPONSE_TYPE);
             dataOutputStream.writeLong(response.getRequestId());
             byte[] data = serializer.serialize(response);
+            dataOutputStream.writeInt(data.length);
             dataOutputStream.write(data);
             dataOutputStream.flush();
         } catch (IOException e) {
@@ -27,9 +28,11 @@ public class JavaBeanOutputStreamHandler {
 
     public synchronized void writeRequest(Request request) {
         try {
+            System.out.println("writeRequest ..");
             dataOutputStream.writeByte(CommonConstant.REQUEST_TYPE);
             dataOutputStream.writeLong(request.getRequestId());
             byte[] data = serializer.serialize(request);
+            dataOutputStream.writeInt(data.length);
             dataOutputStream.write(data);
             dataOutputStream.flush();
         } catch (IOException e) {

@@ -46,8 +46,11 @@ public class SocketHandler implements Runnable{
 
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-
+            try {
+                socket.close();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
         }
     }
 

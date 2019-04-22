@@ -22,8 +22,6 @@ public class RpcProxyClient {
 
     private volatile boolean started = false;
 
-    private ExecutorService pool;
-
     public RpcProxyClient(final String host, final int port) throws IOException {
         this.host = host;
         this.port = port;
@@ -36,29 +34,39 @@ public class RpcProxyClient {
         this.outputStreamHandler = new JavaBeanOutputStreamHandler(socket.getOutputStream());
         this.inputStreamHandler = new JavaBeanInputStreamHandler(socket.getInputStream());
         this.contextHolder = new ClientContextHolder();
-        this.pool = Executors.newCachedThreadPool();
 
         new Thread(() -> {
             try {
-                while (inputStreamHandler.available()) {
-                    System.out.println("input stream available..");
-                    Response response = inputStreamHandler.readResponse();
-                    ClientContext context = contextHolder.remove(response.getRequestId());
-                    if (context == null) {
-                        System.out.println("response not match any request, contextId=" + response.getRequestId());
-                    } else {
-                        context.setResponse(response);
-                        context.notifyAll();
-                        System.out.println("input stream read response end.");
+                System.out.println("new thread to monitor response.. ");
+                while (true) {
+                    if (inputStreamHandler.available()) {
+                        System.out.println("input stream available..");
+                        Response response = inputStreamHandler.readResponse();
+                        ClientContext context = contextHolder.remove(response.getRequestId());
+                        if (context == null) {
+                            System.out.println("response not match any request, contextId=" + response.getRequestId());
+                        } else {
+                            context.setResponse(response);
+                            synchronized (context) {
+                                System.out.println("notify.. context=" + context);
+                                context.notifyAll();
+                            }
+                            System.out.println("input stream read response end.");
+                        }
                     }
                 }
 
             } catch (Exception e) {
                 e.printStackTrace();
-            } finally {
-                inputStreamHandler.shutdown();
+                try {
+                    socket.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
             }
         }).start();
+
+        started = true;
     }
 
     public <T> T proxyClient(Class<T> clazz) {
@@ -88,6 +96,7 @@ public class RpcProxyClient {
 
                             synchronized (context) {
                                 try {
+                                    System.out.println("context wait.. context=" + context);
                                     context.wait();
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
@@ -97,7 +106,7 @@ public class RpcProxyClient {
 
                             Response response = context.getResponse();
                             System.out.println("get response: " + response);
-                            return response;
+                            return response.getData();
                         } catch (Exception e) {
                             e.printStackTrace();
                             throw e;

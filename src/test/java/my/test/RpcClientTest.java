@@ -16,17 +16,17 @@ public class RpcClientTest {
         }
         IHello proxyClient = client.proxyClient(IHello.class);
 
-        String result = proxyClient.sayHi("1");
-        System.out.println("result = " + result);
+//        String result = proxyClient.sayHi("1");
+//        System.out.println("result = " + result);
 
-//        for (int i = 0; i < 5; i ++) {
-//            try {
-//                String result = proxyClient.sayHi(String.valueOf(i));
-//                System.out.println("result = " + result);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
+        for (int i = 0; i < 5; i ++) {
+            try {
+                String result = proxyClient.sayHi(String.valueOf(i));
+                System.out.println("result = " + result);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }
