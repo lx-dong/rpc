@@ -35,6 +35,7 @@ public class RpcProxyClient {
         this.inputStreamHandler = new JavaBeanInputStreamHandler(socket.getInputStream());
         this.contextHolder = new ClientContextHolder();
 
+        // response monitor
         new Thread(() -> {
             try {
                 System.out.println("new thread to monitor response.. ");

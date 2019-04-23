@@ -65,13 +65,13 @@ public class JavaBeanSocketRpcService implements RpcService {
             } catch (IOException e) {
                 System.out.println("ServiceSocket error!" + e.getMessage());
                 e.printStackTrace();
-                System.out.println("sleep 2s");
+                throw new RuntimeException(e);
+            } finally {
                 try {
-                    TimeUnit.SECONDS.sleep(2);
-                } catch (InterruptedException e1) {
-                    e1.printStackTrace();
+                    serverSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                System.out.println("retry..");
             }
         }
 

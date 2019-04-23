@@ -41,7 +41,6 @@ public class SocketHandler implements Runnable{
                         System.out.println("--- write over.");
                     });
                 }
-                TimeUnit.SECONDS.sleep(1);
             }
 
         } catch (Exception e) {

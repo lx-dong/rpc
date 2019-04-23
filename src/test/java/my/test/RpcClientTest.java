@@ -4,6 +4,8 @@ import my.rpc.client.RpcProxyClient;
 import my.rpc.javabean.IHello;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class RpcClientTest {
 
@@ -18,14 +20,18 @@ public class RpcClientTest {
 
 //        String result = proxyClient.sayHi("1");
 //        System.out.println("result = " + result);
+        ExecutorService pool = Executors.newCachedThreadPool();
 
-        for (int i = 0; i < 5; i ++) {
-            try {
-                String result = proxyClient.sayHi(String.valueOf(i));
-                System.out.println("result = " + result);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        for (int i = 0; i < 20; i ++) {
+            final int index = i;
+            pool.execute(() -> {
+                try {
+                    String result = proxyClient.sayHi(String.valueOf(index));
+                    System.out.println("result = " + result);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
         }
     }
 
