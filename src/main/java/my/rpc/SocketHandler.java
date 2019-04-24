@@ -34,11 +34,21 @@ public class SocketHandler implements Runnable{
                     Request request = inputStreamHandler.readRequest();
                     System.out.println("--- read request:" + request);
                     pool.execute(() -> {
-                        System.out.println("--- invoke request..");
-                        Response response = invoke(request);
-                        System.out.println("--- return response: " + response + ", write output..");
-                        outputStreamHandler.writeResponse(response);
-                        System.out.println("--- write over.");
+                        try {
+                            System.out.println("--- invoke request..");
+                            Response response = invoke(request);
+                            System.out.println("--- return response: " + response + ", write output..");
+                            outputStreamHandler.writeResponse(response);
+                            System.out.println("--- write over.");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            try {
+                                System.out.println("IOException, socket close..");
+                                socket.close();
+                            } catch (IOException e1) {
+                                e1.printStackTrace();
+                            }
+                        }
                     });
                 }
             }
@@ -46,6 +56,7 @@ public class SocketHandler implements Runnable{
         } catch (Exception e) {
             e.printStackTrace();
             try {
+                System.out.println("IOException, socket close..");
                 socket.close();
             } catch (IOException e1) {
                 e1.printStackTrace();
