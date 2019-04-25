@@ -1,64 +1,19 @@
 package my.rpc.netty;
 
+
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandler;
+import io.netty.handler.codec.MessageToByteEncoder;
+import my.rpc.codec.NettyCodec;
 
 /**
  * Created by lx-dong on 2019/4/24.
  */
-public class NettyEncoder implements ChannelInboundHandler {
-    @Override
-    public void channelRegistered(ChannelHandlerContext channelHandlerContext) throws Exception {
-
-    }
+public class NettyEncoder extends MessageToByteEncoder {
+    private NettyCodec codec;
 
     @Override
-    public void channelUnregistered(ChannelHandlerContext channelHandlerContext) throws Exception {
-
-    }
-
-    @Override
-    public void channelActive(ChannelHandlerContext channelHandlerContext) throws Exception {
-
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext channelHandlerContext) throws Exception {
-
-    }
-
-    @Override
-    public void channelRead(ChannelHandlerContext channelHandlerContext, Object o) throws Exception {
-
-    }
-
-    @Override
-    public void channelReadComplete(ChannelHandlerContext channelHandlerContext) throws Exception {
-
-    }
-
-    @Override
-    public void userEventTriggered(ChannelHandlerContext channelHandlerContext, Object o) throws Exception {
-
-    }
-
-    @Override
-    public void channelWritabilityChanged(ChannelHandlerContext channelHandlerContext) throws Exception {
-
-    }
-
-    @Override
-    public void handlerAdded(ChannelHandlerContext channelHandlerContext) throws Exception {
-
-    }
-
-    @Override
-    public void handlerRemoved(ChannelHandlerContext channelHandlerContext) throws Exception {
-
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext channelHandlerContext, Throwable throwable) throws Exception {
-
+    protected void encode(ChannelHandlerContext ctx, Object message, ByteBuf buf) throws Exception {
+        codec.encode(ctx.channel(), buf, message);
     }
 }

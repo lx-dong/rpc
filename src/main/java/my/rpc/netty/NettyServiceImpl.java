@@ -1,15 +1,18 @@
 package my.rpc.netty;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.ByteToMessageDecoder;
+import my.rpc.RpcException;
 import my.rpc.RpcService;
+import my.rpc.codec.NettyCodec;
+
+import java.util.List;
 
 /**
  * Created by lx-dong on 2019/4/24.
@@ -18,7 +21,7 @@ public class NettyServiceImpl implements RpcService {
     private EventLoopGroup parentGroup = new EpollEventLoopGroup(1);
     private EventLoopGroup workGroup = new EpollEventLoopGroup();
     private ServerBootstrap serverBootstrap = new ServerBootstrap();
-
+    private NettyCodec codec;
 
     @Override
     public void start() {
@@ -38,7 +41,7 @@ public class NettyServiceImpl implements RpcService {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
                     protected void initChannel(NioSocketChannel channel) throws Exception {
-                        channel.pipeline().addLast(new NettyEncoder(), new NettyDecoder()); // TODO
+                        channel.pipeline().addLast(new NettyDecoder(), new NettyEncoder()); // TODO
                     }
                 });
         // TODO 后续操作
