@@ -7,6 +7,7 @@ import my.rpc.Request;
 import my.rpc.ServiceRegister;
 import my.rpc.constant.CommonConstant;
 
+import java.lang.reflect.Method;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,11 +29,13 @@ public class NettyServiceHandler extends SimpleChannelInboundHandler<Request> {
         Channel channel = ctx.channel();
         // call
         // 1,获取请求对应服务接口
+        Object service = register.getService(request.getClassName());
         // 2,执行请求函数，返回结果
+        Method method = service.getClass().getMethod(request.getMethodName(), request.getParamTypes());
+        Object data = method.invoke(service, request.getParams());
+
         // 3,封装为response，序列化为byte[]
         // 4,channel.write  输出响应流
-
-        register.
 
     }
 

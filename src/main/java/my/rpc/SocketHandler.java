@@ -69,7 +69,7 @@ public class SocketHandler implements Runnable{
         try {
             Object service = ServiceRegisterHolder.getInstance().get(SocketServiceRegister.class).getService(request.getClassName());
             if (service == null) {
-                System.out.println("service " + request.getClassName() + " not found!");
+                throw new RpcException("service " + request.getClassName() + " not found!");
             }
             Object[] params = request.getParams();
             Class<?>[] types = request.getParamTypes();
