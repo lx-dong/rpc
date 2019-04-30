@@ -61,9 +61,11 @@ public class NettyServiceHandler extends SimpleChannelInboundHandler<Request> {
             SecurityManager s = System.getSecurityManager();
             this.group = (s != null) ? s.getThreadGroup() :
                     Thread.currentThread().getThreadGroup();
-            this.namePrefix = "pool-" +
-                    prefix +
-                    "-thread-";
+            this.namePrefix = "pool-"
+                    + poolNumber.getAndIncrement()
+                    + "-"
+                    + prefix
+                    + "-thread-";
             this.daemon = daemon;
         }
 
