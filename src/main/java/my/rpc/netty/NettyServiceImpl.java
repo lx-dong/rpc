@@ -10,6 +10,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import my.rpc.RpcException;
 import my.rpc.RpcService;
+import my.rpc.ServiceRegister;
 import my.rpc.codec.NettyCodec;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class NettyServiceImpl implements RpcService {
     private EventLoopGroup parentGroup = new EpollEventLoopGroup(1);
     private EventLoopGroup workGroup = new EpollEventLoopGroup();
     private ServerBootstrap serverBootstrap = new ServerBootstrap();
-    private NettyCodec codec;
+    private ServiceRegister register; // TODO 待实现
 
     @Override
     public void start() {
@@ -41,7 +42,7 @@ public class NettyServiceImpl implements RpcService {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
                     protected void initChannel(NioSocketChannel channel) throws Exception {
-                        channel.pipeline().addLast(new NettyDecoder(), new NettyEncoder()); // TODO
+                        channel.pipeline().addLast(new NettyDecoder(), new NettyEncoder(), new NettyServiceHandler(register)); // TODO
                     }
                 });
         // TODO 后续操作

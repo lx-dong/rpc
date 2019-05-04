@@ -1,10 +1,14 @@
 package my.rpc.netty;
 
+import io.netty.buffer.UnpooledHeapByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import my.rpc.DefaultResponse;
 import my.rpc.Request;
+import my.rpc.Response;
 import my.rpc.ServiceRegister;
+import my.rpc.codec.NettyCodec;
 import my.rpc.constant.CommonConstant;
 
 import java.lang.reflect.Method;
@@ -26,7 +30,6 @@ public class NettyServiceHandler extends SimpleChannelInboundHandler<Request> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Request request) throws Exception {
-        Channel channel = ctx.channel();
         // call
         // 1,获取请求对应服务接口
         Object service = register.getService(request.getClassName());
@@ -35,7 +38,10 @@ public class NettyServiceHandler extends SimpleChannelInboundHandler<Request> {
         Object data = method.invoke(service, request.getParams());
 
         // 3,封装为response，序列化为byte[]
-        // 4,channel.write  输出响应流
+        DefaultResponse response = new DefaultResponse(request.getRequestId());
+        response.setData(data);
+        // 4,context.writeAndFlush  输出响应流,进入下一个链
+        ctx.writeAndFlush(response); // TODO 应改为异步
 
     }
 
