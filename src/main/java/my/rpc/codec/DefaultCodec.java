@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import my.rpc.*;
 import my.rpc.constant.CommonConstant;
+import my.rpc.exception.RpcException;
 import my.rpc.serialization.JavaBeanSerializer;
 import my.rpc.serialization.Serializer;
 

@@ -1,4 +1,4 @@
-package my.rpc;
+package my.rpc.exception;
 
 public class RpcException extends RuntimeException{
     

@@ -1,11 +1,12 @@
 package my.rpc;
 
+import my.rpc.exception.RpcException;
+
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class SocketHandler implements Runnable{
     private Socket socket;

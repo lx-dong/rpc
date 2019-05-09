@@ -1,17 +1,10 @@
 package my.rpc.netty;
 
-import io.netty.buffer.UnpooledHeapByteBuf;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import my.rpc.DefaultResponse;
-import my.rpc.Request;
-import my.rpc.Response;
-import my.rpc.ServiceRegister;
-import my.rpc.codec.NettyCodec;
+import my.rpc.*;
 import my.rpc.constant.CommonConstant;
 
-import java.lang.reflect.Method;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -19,29 +12,24 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by lx-dong on 2019/4/26.
  */
 public class NettyServiceHandler extends SimpleChannelInboundHandler<Request> {
-    private ServiceRegister register;
+    private MessageRouter router;
     private ExecutorService pool = new ThreadPoolExecutor(CommonConstant.coreThreadSize, CommonConstant.maxThreadSize, 60, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(), new NamedThreadFactory("NettyServiceHandler"));
 
-    public NettyServiceHandler(ServiceRegister register) {
-        super();
-        this.register = register;
+
+    public NettyServiceHandler(MessageRouter router) {
+        this.router = router;
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Request request) throws Exception {
-        // call
-        // 1,获取请求对应服务接口
-        Object service = register.getService(request.getClassName());
-        // 2,执行请求函数，返回结果
-        Method method = service.getClass().getMethod(request.getMethodName(), request.getParamTypes());
-        Object data = method.invoke(service, request.getParams());
 
-        // 3,封装为response，序列化为byte[]
-        DefaultResponse response = new DefaultResponse(request.getRequestId());
-        response.setData(data);
-        // 4,context.writeAndFlush  输出响应流,进入下一个链
-        ctx.writeAndFlush(response); // TODO 应改为异步
+        pool.submit(() -> {
+            Response response = router.handle(request);
+            ctx.writeAndFlush(response);
+
+        });
+
 
     }
 

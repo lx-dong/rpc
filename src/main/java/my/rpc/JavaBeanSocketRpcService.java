@@ -27,7 +27,16 @@ public class JavaBeanSocketRpcService implements RpcService {
     }
 
     public <T> void register(Class<? super T> serviceInterface, Class<T> impl) {
-        register.register(serviceInterface, impl);
+        try {
+            register.register(serviceInterface, impl);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public int getPort() {
+        return config.getPort();
     }
 
     public synchronized void start() {

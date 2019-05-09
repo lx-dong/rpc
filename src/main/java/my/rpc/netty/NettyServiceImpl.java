@@ -1,19 +1,16 @@
 package my.rpc.netty;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.ByteToMessageDecoder;
-import my.rpc.RpcException;
+import my.rpc.MessageRouter;
 import my.rpc.RpcService;
 import my.rpc.ServiceRegister;
-import my.rpc.codec.NettyCodec;
 
-import java.util.List;
+import java.net.InetSocketAddress;
 
 /**
  * Created by lx-dong on 2019/4/24.
@@ -22,7 +19,12 @@ public class NettyServiceImpl implements RpcService {
     private EventLoopGroup parentGroup = new EpollEventLoopGroup(1);
     private EventLoopGroup workGroup = new EpollEventLoopGroup();
     private ServerBootstrap serverBootstrap = new ServerBootstrap();
-    private ServiceRegister register; // TODO 待实现
+    private ServiceRegister register = new NettyServiceRegister();
+    private InetSocketAddress address;
+
+    public NettyServiceImpl(int port) {
+        address = new InetSocketAddress(port);
+    }
 
     @Override
     public void start() {
@@ -42,10 +44,18 @@ public class NettyServiceImpl implements RpcService {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
                     protected void initChannel(NioSocketChannel channel) throws Exception {
-                        channel.pipeline().addLast(new NettyDecoder(), new NettyEncoder(), new NettyServiceHandler(register)); // TODO
+                        channel.pipeline().addLast(new NettyDecoder(), new NettyEncoder(), new NettyServiceHandler(new MessageRouter(register))); // TODO
                     }
                 });
         // TODO 后续操作
+        ChannelFuture channelFuture = serverBootstrap.bind(address).syncUninterruptibly();
+        channelFuture.addListener(future -> {
+            if (channelFuture.isSuccess()) {
+                System.out.println("rpc netty service bind success, port:" + getPort());
+            } else {
+                System.out.println("rpc netty service bind fail, port:" + getPort());
+            }
+        });
     }
 
     @Override
@@ -59,7 +69,16 @@ public class NettyServiceImpl implements RpcService {
     }
 
     @Override
-    public <T> void register(Class<? super T> serviceInterface, Class<T> impl) {
+    public <T> void register(Class<? super T> serviceInterface, Class<T> impl){
+        try{
+            register.register(serviceInterface, impl);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
+    @Override
+    public int getPort() {
+        return this.address.getPort();
     }
 }

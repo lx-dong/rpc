@@ -1,5 +1,7 @@
 package my.rpc;
 
+import my.rpc.exception.RpcException;
+
 import java.io.Serializable;
 
 public class DefaultResponse implements Response, Serializable {
@@ -7,6 +9,7 @@ public class DefaultResponse implements Response, Serializable {
 
     private long requestId;
     private Object data;
+    private RpcException exception;
 
     public DefaultResponse(long requestId) {
         this.requestId = requestId;
@@ -26,8 +29,22 @@ public class DefaultResponse implements Response, Serializable {
         return data;
     }
 
+    @Override
+    public boolean hasException() {
+        return exception != null;
+    }
+
+    @Override
+    public RpcException getException() {
+        return exception;
+    }
+
     public void setData(Object data) {
         this.data = data;
+    }
+
+    public void setException(RpcException e) {
+        this.exception = e;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package my.rpc;
 
 public interface RpcService {
+
     void start();
 
     String getStatus();
@@ -8,4 +9,6 @@ public interface RpcService {
     void shutdown();
 
     public <T> void register(Class<? super T> serviceInterface, Class<T> impl);
+
+    int getPort();
 }
